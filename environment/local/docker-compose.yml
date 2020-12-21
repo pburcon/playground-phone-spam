@@ -1,0 +1,166 @@
+version: '3.8'
+
+networks:
+  kafka-network:
+    driver: bridge
+  redis-network:
+    driver: bridge
+
+services:
+
+  #
+  # redis
+  #
+
+  redis:
+    image: redis:6.0.9-alpine
+    restart: always
+    hostname: redis
+    networks:
+      - redis-network
+    ports:
+      - 6379:6379
+
+  #
+  #  zookeeper cluster
+  #
+
+  zoo1:
+    image: zookeeper:3.6.2
+    restart: always
+    hostname: zoo1
+    networks:
+      - kafka-network
+    environment:
+      ZOO_MY_ID: 1
+      ZOO_SERVERS: server.1=0.0.0.0:2888:3888;2181 server.2=zoo2:2888:3888;2181 server.3=zoo3:2888:3888;2181
+      ZOO_STANDALONE_ENABLED: "false"
+
+  zoo2:
+    image: zookeeper:3.6.2
+    restart: always
+    hostname: zoo2
+    networks:
+      - kafka-network
+    environment:
+      ZOO_MY_ID: 2
+      ZOO_SERVERS: server.1=zoo1:2888:3888;2181 server.2=0.0.0.0:2888:3888;2181 server.3=zoo3:2888:3888;2181
+      ZOO_STANDALONE_ENABLED: "false"
+
+  zoo3:
+    image: zookeeper:3.6.2
+    restart: always
+    hostname: zoo3
+    networks:
+      - kafka-network
+    environment:
+      ZOO_MY_ID: 3
+      ZOO_SERVERS: server.1=zoo1:2888:3888;2181 server.2=zoo2:2888:3888;2181 server.3=0.0.0.0:2888:3888;2181
+      ZOO_STANDALONE_ENABLED: "false"
+
+  #
+  # kafka cluster
+  #
+
+  kafka1:
+    image: bitnami/kafka:2.6.0
+    restart: always
+    hostname: kafka1
+    networks:
+      - kafka-network
+    ports:
+      - 9013:9093
+    environment:
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_BROKER_ID=1
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka1:9092,EXTERNAL://docker-host:9013
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,EXTERNAL://:9093
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zoo1:2181,zoo2:2181,zoo3:2181
+    depends_on:
+      - zoo1
+      - zoo2
+      - zoo3
+
+  kafka2:
+    image: bitnami/kafka:2.6.0
+    restart: always
+    hostname: kafka2
+    networks:
+      - kafka-network
+    ports:
+      - 9023:9093
+    environment:
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_BROKER_ID=2
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka2:9092,EXTERNAL://docker-host:9023
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,EXTERNAL://:9093
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zoo1:2181,zoo2:2181,zoo3:2181
+    depends_on:
+      - zoo1
+      - zoo2
+      - zoo3
+
+  kafka3:
+    image: bitnami/kafka:2.6.0
+    restart: always
+    hostname: kafka3
+    networks:
+      - kafka-network
+    ports:
+      - 9033:9093
+    environment:
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_BROKER_ID=3
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka3:9092,EXTERNAL://docker-host:9033
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,EXTERNAL://:9093
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zoo1:2181,zoo2:2181,zoo3:2181
+    depends_on:
+      - zoo1
+      - zoo2
+      - zoo3
+
+  #
+  # schemaregistry
+  #
+
+  schemaregistry:
+    image: confluentinc/cp-schema-registry:5.4.0
+    hostname: schemaregistry
+    networks:
+      - kafka-network
+    ports:
+      - 8081:8081
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schemaregistry
+      SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: zoo1:2181,zoo2:2181,zoo3:2181
+    depends_on:
+      - zoo1
+      - zoo2
+      - zoo3
+      - kafka1
+      - kafka2
+      - kafka3
+
+  #
+  # rest proxy
+  #
+
+  restproxy:
+    image: confluentinc/cp-kafka-rest:5.4.3
+    restart: always
+    hostname: restproxy
+    networks:
+      - kafka-network
+    ports:
+      - 8082:8082
+    environment:
+      KAFKA_REST_HOST_NAME: restproxy
+      KAFKA_REST_LISTENERS: http://0.0.0.0:8082
+      KAFKA_REST_BOOTSTRAP_SERVERS: PLAINTEXT://kafka1:9092,PLAINTEXT://kafka2:9092,PLAINTEXT://kafka3:9092
+    depends_on:
+      - kafka1
+      - kafka2
+      - kafka3

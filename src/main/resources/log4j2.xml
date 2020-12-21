@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <Appenders>
+        <Console name="Console">
+            <PatternLayout pattern="%d{ISO8601} %highlight{%-5level [%t] %logger{36}} - %msg%n"/>
+
+            <!--
+            MDC is tricky with cats-effect
+            <PatternLayout pattern="%d{ISO8601} %highlight{%-5level [%t] (%mdc{id}) %logger{36}} - %msg%n"/>
+            -->
+        </Console>
+
+        <Async name="AsyncConsole">
+            <AppenderRef ref="Console"/>
+        </Async>
+    </Appenders>
+
+    <Loggers>
+
+        <Logger name="org.http4s" level="WARN" additivity="false">
+            <AppenderRef ref="AsyncConsole"/>
+        </Logger>
+        <Logger name="org.http4s.server.blaze.BlazeServerBuilder" level="INFO" additivity="false">
+            <AppenderRef ref="AsyncConsole"/>
+        </Logger>
+
+        <Logger name="pl.pburcon" level="DEBUG" additivity="false">
+            <AppenderRef ref="AsyncConsole"/>
+        </Logger>
+
+        <Root>
+            <AppenderRef ref="AsyncConsole" level="ERROR"/>
+        </Root>
+    </Loggers>
+</Configuration>
