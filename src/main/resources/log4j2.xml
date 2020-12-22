@@ -16,6 +16,9 @@
     </Appenders>
 
     <Loggers>
+        <Logger name="dev.profunktor" level="WARN" additivity="false">
+            <AppenderRef ref="AsyncConsole"/>
+        </Logger>
 
         <Logger name="org.http4s" level="WARN" additivity="false">
             <AppenderRef ref="AsyncConsole"/>
@@ -28,8 +31,8 @@
             <AppenderRef ref="AsyncConsole"/>
         </Logger>
 
-        <Root>
-            <AppenderRef ref="AsyncConsole" level="ERROR"/>
+        <Root level="WARN">
+            <AppenderRef ref="AsyncConsole"/>
         </Root>
     </Loggers>
 </Configuration>

@@ -3,6 +3,9 @@ package pl.pburcon.phoneSpam.util.java
 import java.time.{Duration => JavaDuration}
 import scala.concurrent.duration.{Duration, FiniteDuration}
 
+/**
+ * Implicit conversions for the `java.time`` package
+ */
 trait JavaTimeConverters {
 
   /**

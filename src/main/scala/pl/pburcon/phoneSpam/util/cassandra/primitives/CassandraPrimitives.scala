@@ -1,0 +1,3 @@
+package pl.pburcon.phoneSpam.util.cassandra.primitives
+
+trait CassandraPrimitives extends CassandraJsonPrimitive with CassandraJavaTimePrimitives with CassandraTaggedPrimitive

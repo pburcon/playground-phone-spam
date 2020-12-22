@@ -7,6 +7,10 @@ object CompilerOptions {
     "-feature",                          // Emit warning and location for usages of features that should be imported explicitly.
     "-unchecked",                        // Enable additional warnings where generated code depends on assumptions.
 
+    "-opt:inline",                       // Inline method invocation
+    "-opt:l:inline",                     // Enable cross-method optimizations
+    "-opt-inline-from:**",               // Inline from all
+
     "-language:existentials",            // Existential types (besides wildcard types) can be written and inferred
     "-language:experimental.macros",     // Allow macro definition (besides implementation and application)
     "-language:higherKinds",             // Allow higher-kinded types
